@@ -46,6 +46,7 @@ def reset_database():
             {"id": "role_designer", "name": "设计师", "code": "designer"},
             {"id": "role_reviewer", "name": "审定人", "code": "reviewer"},
             {"id": "role_guest", "name": "访客", "code": "guest"},
+            {"id": "role_observer", "name": "观察员", "code": "observer"},
         ]
 
         for role_data in roles:

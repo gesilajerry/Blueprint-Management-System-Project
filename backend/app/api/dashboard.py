@@ -77,9 +77,9 @@ async def get_dashboard_stats(
 @router.get("/product-stats", response_model=Response)
 async def get_product_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("viewDashboard"))
 ):
-    """获取各产品图纸统计（不过滤权限，显示全部数据）"""
+    """获取各产品图纸统计（需要 viewDashboard 权限）"""
     # 获取所有产品及其图纸统计
     products = db.query(Product).filter(Product.status == "active").all()
 
@@ -122,9 +122,9 @@ async def get_product_stats(
 @router.get("/weekly-trend", response_model=Response)
 async def get_weekly_trend(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("viewDashboard"))
 ):
-    """获取近7天图纸上传趋势（不过滤权限，显示全部数据）"""
+    """获取近7天图纸上传趋势（需要 viewDashboard 权限）"""
     from ..models.product import Product
 
     now = datetime.utcnow()
@@ -188,9 +188,9 @@ async def get_weekly_trend(
 async def get_recent_uploads(
     limit: int = Query(5, ge=1, le=20),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("viewDashboard"))
 ):
-    """获取最近上传记录（不过滤权限，显示全部数据）"""
+    """获取最近上传记录（需要 viewDashboard 权限）"""
     versions = db.query(DrawingVersion, Drawing).join(
         Drawing, DrawingVersion.drawing_id == Drawing.id
     ).filter(

@@ -8,6 +8,10 @@
           <el-icon><Download /></el-icon>
           导出数据
         </el-button>
+        <el-button type="warning" @click="handleFullBackup" :loading="backupLoading" v-if="userStore.isAdmin()">
+          <el-icon><Download /></el-icon>
+          全量备份
+        </el-button>
         <el-button type="primary" @click="handleCreate">
           <el-icon><Plus /></el-icon>
           新建图纸
@@ -92,8 +96,8 @@
 
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="请选择" style="width: 120px">
-            <el-option label="有效" value="ACTIVE" />
-            <el-option label="已作废" value="ARCHIVED" />
+            <el-option label="有效" value="active" />
+            <el-option label="已作废" value="archived" />
             <el-option label="全部" value="all" />
           </el-select>
         </el-form-item>
@@ -107,7 +111,7 @@
 
     <!-- 表格区 -->
     <el-card class="table-card">
-      <el-table :data="tableData" stripe style="width: 100%" v-loading="loading">
+      <el-table :data="tableData" stripe style="width: 100%" v-loading="loading" :row-class-name="getRowClassName">
         <el-table-column prop="drawing_no" label="图号" width="180" />
         <el-table-column prop="name" label="图纸名称" min-width="180" show-overflow-tooltip />
         <el-table-column prop="version_no" label="版本号" width="90">
@@ -143,13 +147,14 @@
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleView(row)">详情</el-button>
-            <el-button link type="primary" @click="handleUpload(row)">上传版本</el-button>
+            <el-button link type="primary" @click="handleUpload(row)" v-if="row.status !== 'archived'">上传版本</el-button>
             <el-dropdown trigger="click">
               <el-button link type="info">更多</el-button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item @click="handleHistory(row)">版本历史</el-dropdown-item>
-                  <el-dropdown-item divided @click="handleDelete(row)" style="color: #f56c6c">作废</el-dropdown-item>
+                  <el-dropdown-item divided @click="handleReactivate(row)" v-if="row.status === 'archived'" style="color: #67c23a">重新激活</el-dropdown-item>
+                  <el-dropdown-item divided @click="handleDelete(row)" style="color: #f56c6c" v-if="row.status !== 'archived'">作废</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -179,10 +184,13 @@ import { useRouter, useRoute } from 'vue-router'
 import { Plus, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { api } from '../utils/api'
+import { useUserStore } from '../stores/user'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 const loading = ref(false)
+const backupLoading = ref(false)
 
 const searchForm = reactive({
   keyword: '',
@@ -192,7 +200,7 @@ const searchForm = reactive({
   uploader_id: '',
   creator_id: '',
   confidentiality_level: '',
-  status: 'ACTIVE'
+  status: 'active'
 })
 
 const pagination = reactive({
@@ -318,6 +326,10 @@ const getLevelTagType = (level) => {
   return map[level] || 'info'
 }
 
+const getRowClassName = ({ row }) => {
+  return row.status === 'archived' ? 'archived-row' : ''
+}
+
 const handleSearch = () => {
   pagination.page = 1
   loadDrawings()
@@ -371,6 +383,39 @@ const handleExport = async () => {
   }
 }
 
+const handleFullBackup = async () => {
+  backupLoading.value = true
+  try {
+    const API_BASE_URL = 'http://127.0.0.1:8000/api'
+    const response = await fetch(`${API_BASE_URL}/drawings/export/backup`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('备份失败')
+    }
+
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `full_backup_${new Date().toISOString().split('T')[0]}.zip`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    ElMessage.success('全量备份下载成功')
+  } catch (error) {
+    console.error('备份失败:', error)
+    ElMessage.error('全量备份失败：' + error.message)
+  } finally {
+    backupLoading.value = false
+  }
+}
+
 const handleView = (row) => {
   router.push(`/drawings/${row.id}`)
 }
@@ -413,6 +458,21 @@ const handleDelete = async (row) => {
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('作废失败：' + error.message)
+    }
+  }
+}
+
+const handleReactivate = async (row) => {
+  try {
+    await ElMessageBox.confirm(`确认重新激活图纸"${row.name}"吗？`, '提示', {
+      type: 'warning'
+    })
+    await api.drawings.reactivate(row.id)
+    ElMessage.success('图纸已重新激活')
+    loadDrawings()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('重新激活失败：' + error.message)
     }
   }
 }
@@ -464,5 +524,15 @@ const handlePageChange = (page) => {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+::v-deep .archived-row {
+  background-color: #fef0f0 !important;
+}
+::v-deep .archived-row td {
+  background-color: #fef0f0 !important;
+}
+::v-deep .el-table__row.archived-row {
+  background-color: #fef0f0 !important;
 }
 </style>

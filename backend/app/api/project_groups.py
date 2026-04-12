@@ -95,6 +95,16 @@ async def get_project_group(
     if not pg:
         raise HTTPException(status_code=404, detail="项目组不存在")
 
+    # 权限检查：有 viewAllDrawings 可以查看所有项目组，其他用户只能查看自己参与的项目组
+    if not check_user_permission(current_user, "viewAllDrawings", db):
+        # 检查是否是项目组成员
+        is_member = db.query(project_group_members).filter(
+            project_group_members.c.group_id == group_id,
+            project_group_members.c.user_id == current_user.id
+        ).first() is not None
+        if not is_member:
+            raise HTTPException(status_code=403, detail="您没有权限查看此项目组")
+
     # 获取负责人信息
     leader = db.query(User).filter(User.id == pg.leader_id).first() if pg.leader_id else None
 

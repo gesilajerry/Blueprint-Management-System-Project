@@ -210,6 +210,7 @@ export const api = {
     create: (data) => postForm('/drawings', data),
     update: (id, data) => postForm(`/drawings/${id}`, data),
     delete: (id) => del(`/drawings/${id}`),
+    reactivate: (id) => post(`/drawings/${id}/reactivate`),
     getVersions: (id) => get(`/drawings/${id}/versions`),
     uploadVersion: (id, file, data) => uploadFile(`/drawings/${id}/versions`, file, data),
     download: (id) => `${API_BASE_URL}/drawings/${id}/download`,

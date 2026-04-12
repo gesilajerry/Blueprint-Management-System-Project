@@ -7,6 +7,8 @@
     </el-breadcrumb>
 
     <div class="page-content">
+      <!-- 作废水印 -->
+      <div v-if="drawing.status === 'archived'" class="archived-watermark">作废</div>
       <el-row :gutter="20" v-loading="loading">
         <!-- 左侧：基础信息 -->
         <el-col :span="16">
@@ -18,7 +20,7 @@
                   <el-button type="success" size="small" @click="handlePrint">
                     <el-icon><Printer /></el-icon> 打印
                   </el-button>
-                  <el-button type="primary" size="small" @click="handleEdit" v-if="userStore.canEditDrawing()">编辑</el-button>
+                  <el-button type="primary" size="small" @click="handleEdit" v-if="userStore.canEditDrawing() && drawing.status !== 'archived'">编辑</el-button>
                 </div>
               </div>
             </template>
@@ -256,7 +258,7 @@
               type="success"
               style="width: 100%"
               @click="handleUploadVersion"
-              v-if="userStore.canEditDrawing()"
+              v-if="userStore.canEditDrawing() && drawing.status !== 'archived'"
             >
               <el-icon><Upload /></el-icon>
               上传新版本
@@ -270,6 +272,8 @@
             width="800px"
             class="preview-dialog"
           >
+            <!-- 作废水印 -->
+            <div v-if="drawing.status === 'archived'" class="archived-watermark-dialog">作废</div>
             <div v-if="previewLoading" style="text-align: center; padding: 50px">
               <el-icon class="is-loading" style="font-size: 50px"><Loading /></el-icon>
               <div style="margin-top: 20px">正在加载预览...</div>
@@ -515,6 +519,8 @@
       width="750px"
       :close-on-click-modal="false"
     >
+      <!-- 作废水印 -->
+      <div v-if="drawing.status === 'archived'" class="archived-watermark-dialog">作废</div>
       <div class="print-content" id="printArea">
         <div class="print-header">
           <h1>图纸信息表</h1>
@@ -638,7 +644,7 @@ import { api } from '../utils/api'
 import * as pdfjsLib from 'pdfjs-dist'
 
 // Set worker source for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).href
 
 const route = useRoute()
 const router = useRouter()
@@ -952,13 +958,20 @@ const handleDownload = async () => {
       throw new Error(errorData.detail || '下载失败')
     }
 
-    // 获取文件名从 Content-Disposition header
+    // 获取文件名：优先从 Content-Disposition header，失败则使用原始文件名
     const contentDisposition = response.headers.get('Content-Disposition')
-    let filename = `${drawing.drawing_no}.dwg`
+    let filename = versions.value.find(v => v.id === selectedVersionId.value)?.file_name || `${drawing.drawing_no}.dwg`
     if (contentDisposition) {
-      const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+      // 尝试从 header 中提取文件名
+      const match = contentDisposition.match(/filename\*?[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
       if (match) {
         filename = match[1].replace(/['"]/g, '')
+        // 处理 URL 编码的文件名
+        try {
+          filename = decodeURIComponent(filename)
+        } catch (e) {
+          // 忽略解码错误
+        }
       }
     }
 
@@ -1280,6 +1293,33 @@ const handleReject = async () => {
 
 .page-content {
   margin-top: 15px;
+  position: relative;
+}
+
+.archived-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 80px;
+  font-weight: bold;
+  color: rgba(245, 108, 108, 0.15);
+  pointer-events: none;
+  z-index: 1000;
+  white-space: nowrap;
+}
+
+::v-deep .archived-watermark-dialog {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 60px;
+  font-weight: bold;
+  color: rgba(245, 108, 108, 0.2);
+  pointer-events: none;
+  z-index: 2000;
+  white-space: nowrap;
 }
 
 .info-card {

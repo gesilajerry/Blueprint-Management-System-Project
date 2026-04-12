@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from ..core.database import get_db
 from ..models.user import User
 from ..schemas import UserResponse, UserCreate, UserUpdate, Response, PageResponse
-from .deps import get_current_user, require_permission
+from .deps import get_current_user, require_permission, check_user_permission
 from ..core.security import get_password_hash
 from ..core.logger import log_operation
 
@@ -307,7 +307,11 @@ async def get_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """获取用户详情（任何登录用户都可查看）"""
+    """获取用户详情（本人或管理员可查看）"""
+    # 权限检查：非本人且无管理权限不能查看
+    if user_id != current_user.id and not check_user_permission(current_user, "manageUsers", db):
+        raise HTTPException(status_code=403, detail="您没有权限查看此用户详情")
+
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")

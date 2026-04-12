@@ -264,7 +264,7 @@ import { api } from '../utils/api'
 import * as pdfjsLib from 'pdfjs-dist'
 
 // Set worker source for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).href
 
 const route = useRoute()
 const router = useRouter()

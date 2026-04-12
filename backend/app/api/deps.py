@@ -23,7 +23,8 @@ ROLE_CODE_MAP = {
     "role_guest": "guest",
     "role_project_manager": "project_manager",
     "role_engineer": "engineer",
-    "role_archive_manager": "archive_manager"
+    "role_archive_manager": "archive_manager",
+    "role_observer": "observer"
 }
 
 

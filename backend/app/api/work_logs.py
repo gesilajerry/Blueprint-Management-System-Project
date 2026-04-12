@@ -32,6 +32,8 @@ async def get_work_logs(
             query = query.filter(WorkLog.user_id == user_id)
     else:
         # 其他用户只能查看自己的日志
+        if user_id and user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="您没有权限查看其他用户的工作日志")
         query = query.filter(WorkLog.user_id == current_user.id)
 
     if start_date:

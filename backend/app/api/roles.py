@@ -50,9 +50,9 @@ async def get_roles(
 
 @router.post("", response_model=Response)
 async def create_role(
-    name: str,
-    code: str,
-    permissions: dict = None,
+    name: str = Body(...),
+    code: str = Body(...),
+    permissions: dict = Body(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("manageRoles"))
 ):

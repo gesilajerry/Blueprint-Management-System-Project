@@ -175,6 +175,27 @@ DEFAULT_ROLE_PERMISSIONS = {
         "downloadDrawing": False,
         "workLog": False
     },
+    "observer": {
+        "viewDashboard": True,
+        "viewDrawings": False,
+        "viewAllDrawings": False,
+        "viewProjectDrawings": False,
+        "viewOwnDrawings": False,
+        "viewPendingReview": False,
+        "createDrawing": False,
+        "uploadVersion": False,
+        "reviewConfidentiality": False,
+        "manageUsers": False,
+        "manageRoles": False,
+        "manageProjectGroups": False,
+        "manageDepartments": False,
+        "manageProducts": False,
+        "manageCoreParts": False,
+        "viewLogs": False,
+        "viewAlevelDrawings": False,
+        "downloadDrawing": False,
+        "workLog": False
+    },
     "archive_manager": {
         "viewDashboard": True,
         "viewDrawings": True,

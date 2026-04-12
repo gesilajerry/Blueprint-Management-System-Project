@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+from typing import Optional
 from ..core.database import get_db
 from ..models.user import User
 from ..models.system_log import SystemLog
@@ -13,11 +14,11 @@ router = APIRouter(prefix="/logs", tags=["系统日志"])
 async def get_logs(
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
-    user_id: str = None,
-    action: str = None,
-    resource_type: str = None,
-    start_date: str = None,
-    end_date: str = None,
+    user_id: Optional[str] = Query(None),
+    action: Optional[str] = Query(None),
+    resource_type: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("viewLogs"))
 ):

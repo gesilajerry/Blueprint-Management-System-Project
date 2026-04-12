@@ -60,7 +60,7 @@ async def get_all_review_history(
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("reviewConfidentiality"))
 ):
     try:
         # 获取总数
@@ -122,7 +122,7 @@ async def get_all_review_history(
 async def get_review_history(
     drawing_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("reviewConfidentiality"))
 ):
     result = db.execute(
         text("SELECT * FROM review_history WHERE drawing_id = :drawing_id ORDER BY created_at DESC"),

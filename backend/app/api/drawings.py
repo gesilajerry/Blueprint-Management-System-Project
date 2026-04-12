@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
+from starlette.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime
@@ -6,6 +7,7 @@ import os
 import uuid
 import io
 import csv
+import zipfile
 from ..core.database import get_db
 from ..core.config import settings
 from ..models.user import User
@@ -67,8 +69,12 @@ async def get_drawings(
     from ..models.product import Product
     from ..models.project_group import project_group_members, ProjectGroup
 
-    # 基础查询 - 排除已删除的图纸，且关联的产品必须是进行中的
-    query = db.query(Drawing).filter(Drawing.status != DrawingStatus.DELETED)
+    # 基础查询
+    # 如果筛选"全部"，则包含所有状态的图纸；否则默认排除已删除的
+    if status == 'all':
+        query = db.query(Drawing)
+    else:
+        query = db.query(Drawing).filter(Drawing.status != DrawingStatus.DELETED)
     # 排除关联已归档产品的图纸
     query = query.join(Product).filter(Product.status == 'active')
 
@@ -120,7 +126,7 @@ async def get_drawings(
         query = query.filter(Drawing.creator_id == creator_id)
     if confidentiality_level:
         query = query.filter(Drawing.confidentiality_level == confidentiality_level)
-    if status:
+    if status and status != 'all':
         query = query.filter(Drawing.status == status)
 
     total = query.count()
@@ -375,12 +381,30 @@ async def update_drawing(
     dimensions: Optional[str] = Form(None),
     secret_points: Optional[str] = Form(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("createDrawing"))
 ):
     """更新图纸"""
+    from ..models.product import Product
+
     drawing = db.query(Drawing).filter(Drawing.id == drawing_id).first()
     if not drawing:
         raise HTTPException(status_code=404, detail="图纸不存在")
+
+    # 检查用户是否有权限访问该图纸
+    has_access = False
+    if check_user_permission(current_user, "viewAllDrawings", db):
+        has_access = True
+    elif check_user_permission(current_user, "viewProjectDrawings", db):
+        if drawing.product_id:
+            product = db.query(Product).filter(Product.id == drawing.product_id).first()
+            if product and product.manager_id == current_user.id:
+                has_access = True
+    elif check_user_permission(current_user, "viewOwnDrawings", db):
+        if drawing.creator_id == current_user.id:
+            has_access = True
+
+    if not has_access:
+        raise HTTPException(status_code=403, detail="您没有权限修改此图纸")
 
     update_data = {
         k: v for k, v in {
@@ -428,14 +452,32 @@ async def update_drawing(
 async def delete_drawing(
     drawing_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("createDrawing"))
 ):
     """删除/作废图纸（软删除）"""
+    from ..models.product import Product
+
     drawing = db.query(Drawing).filter(Drawing.id == drawing_id).first()
     if not drawing:
         raise HTTPException(status_code=404, detail="图纸不存在")
 
-    drawing.status = DrawingStatus.DELETED
+    # 检查用户是否有权限访问该图纸
+    has_access = False
+    if check_user_permission(current_user, "viewAllDrawings", db):
+        has_access = True
+    elif check_user_permission(current_user, "viewProjectDrawings", db):
+        if drawing.product_id:
+            product = db.query(Product).filter(Product.id == drawing.product_id).first()
+            if product and product.manager_id == current_user.id:
+                has_access = True
+    elif check_user_permission(current_user, "viewOwnDrawings", db):
+        if drawing.creator_id == current_user.id:
+            has_access = True
+
+    if not has_access:
+        raise HTTPException(status_code=403, detail="您没有权限作废此图纸")
+
+    drawing.status = DrawingStatus.ARCHIVED
     db.commit()
 
     log_operation(
@@ -450,6 +492,51 @@ async def delete_drawing(
     return Response(message="图纸已作废")
 
 
+@router.post("/{drawing_id}/reactivate", response_model=Response)
+async def reactivate_drawing(
+    drawing_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("createDrawing"))
+):
+    """重新激活已作废的图纸"""
+    from ..models.product import Product
+
+    drawing = db.query(Drawing).filter(Drawing.id == drawing_id).first()
+    if not drawing:
+        raise HTTPException(status_code=404, detail="图纸不存在")
+
+    # 检查用户是否有权限访问该图纸
+    has_access = False
+    if check_user_permission(current_user, "viewAllDrawings", db):
+        has_access = True
+    elif check_user_permission(current_user, "viewProjectDrawings", db):
+        if drawing.product_id:
+            product = db.query(Product).filter(Product.id == drawing.product_id).first()
+            if product and product.manager_id == current_user.id:
+                has_access = True
+    elif check_user_permission(current_user, "viewOwnDrawings", db):
+        if drawing.creator_id == current_user.id:
+            has_access = True
+
+    if not has_access:
+        raise HTTPException(status_code=403, detail="您没有权限重新激活此图纸")
+
+    drawing.status = DrawingStatus.ACTIVE
+    db.commit()
+
+    log_operation(
+        user_id=current_user.id,
+        action="REACTIVATE_DRAWING",
+        resource_type="drawing",
+        resource_id=drawing_id,
+        description=f"重新激活图纸：{drawing.drawing_no}",
+        ip_address="unknown"
+    )
+
+    return Response(message="图纸已重新激活")
+
+
+
 @router.post("/{drawing_id}/versions", response_model=Response)
 async def upload_version(
     drawing_id: str,
@@ -461,9 +548,31 @@ async def upload_version(
     current_user: User = Depends(require_permission("uploadVersion"))
 ):
     """上传新版本"""
+    from ..models.product import Product
+
     drawing = db.query(Drawing).filter(Drawing.id == drawing_id).first()
     if not drawing:
         raise HTTPException(status_code=404, detail="图纸不存在")
+
+    # 检查用户是否有权限访问该图纸
+    has_access = False
+    if check_user_permission(current_user, "viewAllDrawings", db):
+        has_access = True
+    elif check_user_permission(current_user, "viewProjectDrawings", db):
+        if drawing.product_id:
+            product = db.query(Product).filter(Product.id == drawing.product_id).first()
+            if product and product.manager_id == current_user.id:
+                has_access = True
+    elif check_user_permission(current_user, "viewOwnDrawings", db):
+        if drawing.creator_id == current_user.id:
+            has_access = True
+
+    if not has_access:
+        raise HTTPException(status_code=403, detail="您没有权限上传此图纸的版本")
+
+    # 作废的图纸不能上传新版本
+    if drawing.status == DrawingStatus.ARCHIVED:
+        raise HTTPException(status_code=400, detail="作废的图纸不能上传新版本，请先重新激活")
 
     # 检查文件大小
     file.file.seek(0, 2)  # 移动到文件末尾
@@ -554,6 +663,28 @@ async def get_versions(
     current_user: User = Depends(get_current_user)
 ):
     """获取版本历史"""
+    from ..models.product import Product
+
+    drawing = db.query(Drawing).filter(Drawing.id == drawing_id).first()
+    if not drawing:
+        raise HTTPException(status_code=404, detail="图纸不存在")
+
+    # 检查用户是否有权限访问该图纸
+    has_access = False
+    if check_user_permission(current_user, "viewAllDrawings", db):
+        has_access = True
+    elif check_user_permission(current_user, "viewProjectDrawings", db):
+        if drawing.product_id:
+            product = db.query(Product).filter(Product.id == drawing.product_id).first()
+            if product and product.manager_id == current_user.id:
+                has_access = True
+    elif check_user_permission(current_user, "viewOwnDrawings", db):
+        if drawing.creator_id == current_user.id:
+            has_access = True
+
+    if not has_access:
+        raise HTTPException(status_code=403, detail="您没有权限查看此图纸版本")
+
     # 修正 is_latest 标志：确保每个图纸只有一个最新版本
     latest_version = db.query(DrawingVersion).filter(
         DrawingVersion.drawing_id == drawing_id
@@ -649,7 +780,30 @@ async def download_drawing(
     if not version:
         raise HTTPException(status_code=404, detail="图纸文件不存在")
 
-    if not os.path.exists(version.file_path):
+    # 解析文件真实路径
+    file_path = version.file_path
+    if file_path.startswith('./'):
+        file_path = file_path[2:]
+
+    # 计算可能的路径：1) 相对于 backend 目录 2) 相对于项目根目录
+    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    possible_paths = [
+        os.path.join(backend_dir, file_path),  # backend/data/drawings/...
+        os.path.join(backend_dir, 'data', 'drawings', file_path.lstrip('data/drawings/') if file_path.startswith('data/drawings/') else file_path),  # 项目根目录
+    ]
+
+    # 如果路径已经是绝对路径
+    if os.path.isabs(version.file_path):
+        possible_paths = [version.file_path]
+
+    # 查找实际存在的文件
+    actual_path = None
+    for p in possible_paths:
+        if os.path.exists(p):
+            actual_path = p
+            break
+
+    if not actual_path:
         raise HTTPException(status_code=404, detail="图纸文件已丢失")
 
     # 记录下载日志
@@ -665,7 +819,7 @@ async def download_drawing(
     # 返回文件
     from fastapi.responses import FileResponse
     return FileResponse(
-        version.file_path,
+        actual_path,
         filename=f"{drawing.drawing_no}_{version.version_no}.{version.file_format.lower()}",
         media_type='application/octet-stream'
     )
@@ -682,9 +836,9 @@ async def export_drawings_csv(
     confidentiality_level: Optional[str] = None,
     status: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("viewAllDrawings"))
 ):
-    """导出图纸数据为 CSV"""
+    """导出图纸数据为 CSV（需要 viewAllDrawings 权限）"""
     from ..models.product import Product
     from ..models.project_group import ProjectGroup, project_group_members
 
@@ -795,4 +949,190 @@ async def export_drawings_csv(
             "content": output.getvalue(),
             "count": len(drawings)
         }
+    )
+
+
+@router.get("/export/backup")
+async def export_full_backup(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("manageUsers"))
+):
+    """管理员全量备份：导出所有系统数据和图纸版本文件"""
+    from ..models.product import Product
+    from ..models.project_group import ProjectGroup
+    from ..models.user import User
+    from ..models.role import Role
+    from ..models.department import Department
+
+    # 获取系统数据
+    users_data = db.query(User).all()
+    roles_data = db.query(Role).all()
+    departments_data = db.query(Department).all()
+    products_data = db.query(Product).all()
+    project_groups_data = db.query(ProjectGroup).all()
+
+    # 获取所有图纸（不筛选权限，因为是 admin）
+    drawings_data = db.query(Drawing).all()
+
+    # 获取所有版本文件
+    all_versions = db.query(DrawingVersion).all()
+
+    # 准备内存 ZIP
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        # 1. 写入 manifest.csv
+        manifest = f"备份时间,总用户数,总角色数,总部门数,总产品数,总项目组数,总图纸数,总版本文件数\n"
+        manifest += f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')},{len(users_data)},{len(roles_data)},{len(departments_data)},{len(products_data)},{len(project_groups_data)},{len(drawings_data)},{len(all_versions)}\n"
+        zip_file.writestr("manifest.csv", manifest)
+
+        # 2. 写入 summary.txt
+        summary = f"=== 全量备份统计 ===\n"
+        summary += f"备份时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        summary += f"用户数: {len(users_data)}\n"
+        summary += f"角色数: {len(roles_data)}\n"
+        summary += f"部门数: {len(departments_data)}\n"
+        summary += f"产品数: {len(products_data)}\n"
+        summary += f"项目组数: {len(project_groups_data)}\n"
+        summary += f"图纸数: {len(drawings_data)}\n"
+        summary += f"版本文件数: {len(all_versions)}\n"
+        zip_file.writestr("summary.txt", summary)
+
+        # 3. 写入 system_data/*.csv
+        # users.csv
+        if users_data:
+            user_csv = io.StringIO()
+            writer = csv.writer(user_csv)
+            writer.writerow(['id', 'username', 'name', 'email', 'phone', 'role_id', 'department_id', 'status'])
+            for u in users_data:
+                writer.writerow([u.id, u.username, u.name, u.email or '', u.phone or '', u.role_id or '', u.department_id or '', u.status])
+            zip_file.writestr("system_data/users.csv", user_csv.getvalue())
+
+        # roles.csv
+        if roles_data:
+            roles_csv = io.StringIO()
+            writer = csv.writer(roles_csv)
+            writer.writerow(['id', 'name', 'code', 'description'])
+            for r in roles_data:
+                writer.writerow([r.id, r.name, r.code, getattr(r, 'description', '')])
+            zip_file.writestr("system_data/roles.csv", roles_csv.getvalue())
+
+        # departments.csv
+        if departments_data:
+            dept_csv = io.StringIO()
+            writer = csv.writer(dept_csv)
+            writer.writerow(['id', 'name', 'code'])
+            for d in departments_data:
+                writer.writerow([d.id, d.name, getattr(d, 'code', '')])
+            zip_file.writestr("system_data/departments.csv", dept_csv.getvalue())
+
+        # products.csv
+        if products_data:
+            prod_csv = io.StringIO()
+            writer = csv.writer(prod_csv)
+            writer.writerow(['id', 'name', 'code', 'status', 'project_group_id', 'manager', 'manager_id', 'start_date'])
+            for p in products_data:
+                writer.writerow([p.id, p.name, p.code, p.status, p.project_group_id or '', p.manager or '', p.manager_id or '', p.start_date.strftime('%Y-%m-%d') if p.start_date else ''])
+            zip_file.writestr("system_data/products.csv", prod_csv.getvalue())
+
+        # project_groups.csv
+        if project_groups_data:
+            pg_csv = io.StringIO()
+            writer = csv.writer(pg_csv)
+            writer.writerow(['id', 'name', 'code', 'description', 'status'])
+            for pg in project_groups_data:
+                writer.writerow([pg.id, pg.name, getattr(pg, 'code', ''), getattr(pg, 'description', ''), getattr(pg, 'status', '')])
+            zip_file.writestr("system_data/project_groups.csv", pg_csv.getvalue())
+
+        # 4. 写入 drawings/drawings.csv
+        if drawings_data:
+            drawings_csv = io.StringIO()
+            writer = csv.writer(drawings_csv)
+            writer.writerow(['id', 'drawing_no', 'name', 'product_id', 'department_id', 'confidentiality_level',
+                             'is_core_part', 'status', 'review_status', 'creator_id', 'purpose',
+                             'material', 'dimensions', 'secret_points', 'created_at', 'updated_at'])
+            for d in drawings_data:
+                writer.writerow([
+                    d.id, d.drawing_no, d.name, d.product_id or '', d.department_id or '',
+                    d.confidentiality_level.value if d.confidentiality_level else '',
+                    '是' if d.is_core_part else '否', d.status.value if d.status else '',
+                    d.review_status.value if d.review_status else '', d.creator_id or '',
+                    d.purpose or '', d.material or '', d.dimensions or '', d.secret_points or '',
+                    d.created_at.strftime('%Y-%m-%d %H:%M:%S') if d.created_at else '',
+                    d.updated_at.strftime('%Y-%m-%d %H:%M:%S') if d.updated_at else ''
+                ])
+            zip_file.writestr("drawings/drawings.csv", drawings_csv.getvalue())
+
+        # 5. 写入 drawings/versions.csv（包含版本变更说明）
+        if all_versions:
+            versions_csv = io.StringIO()
+            writer = csv.writer(versions_csv)
+            writer.writerow(['drawing_id', 'drawing_no', 'version_no', 'file_name', 'file_size', 'file_format',
+                             'change_types', 'change_reason', 'uploader_id', 'uploaded_at', 'is_latest', 'file_path'])
+            for v in all_versions:
+                # 获取图纸号
+                drawing_no = ''
+                for d in drawings_data:
+                    if d.id == v.drawing_id:
+                        drawing_no = d.drawing_no
+                        break
+                writer.writerow([
+                    v.drawing_id, drawing_no, v.version_no, v.file_name or '', v.file_size or '',
+                    v.file_format or '', v.change_types or '', v.change_reason or '',
+                    v.uploader_id or '', v.uploaded_at.strftime('%Y-%m-%d %H:%M:%S') if v.uploaded_at else '',
+                    '是' if v.is_latest else '否', v.file_path or ''
+                ])
+            zip_file.writestr("drawings/versions.csv", versions_csv.getvalue())
+
+        # 6. 复制版本文件到 ZIP
+        # 计算本地路径
+        # FILE_STORAGE_PATH 是 ./data/drawings（相对于 backend/ 目录）
+        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))  # .../backend/
+        file_storage_base = os.path.abspath(os.path.join(backend_dir, settings.FILE_STORAGE_PATH.lstrip('./')))
+
+        for version in all_versions:
+            if not version.file_path:
+                continue
+
+            # 确定文件真实路径
+            file_path = version.file_path
+            # 标准化路径：去除 ./ 前缀
+            if file_path.startswith('./'):
+                file_path = file_path[2:]
+
+            # 如果是绝对路径，直接使用
+            if os.path.isabs(file_path):
+                full_path = file_path
+            else:
+                # 相对路径，基于 file_storage_base
+                # 如果 file_path 已经包含 data/drawings 前缀，需要去除
+                if file_path.startswith("data/drawings/"):
+                    relative_path = file_path[len("data/drawings/"):]
+                    full_path = os.path.join(file_storage_base, relative_path)
+                else:
+                    full_path = os.path.join(file_storage_base, file_path)
+
+            if os.path.exists(full_path):
+                # 计算在 ZIP 中的路径: drawings/files/{drawing_no}/{version_no}/{filename}
+                filename = os.path.basename(full_path)
+                # 获取图纸号作为目录名
+                drawing_no = ''
+                for d in drawings_data:
+                    if d.id == version.drawing_id:
+                        drawing_no = d.drawing_no
+                        break
+                if not drawing_no:
+                    drawing_no = version.drawing_id
+                arcname = f"drawings/files/{drawing_no}/{version.version_no}/{filename}"
+                zip_file.write(full_path, arcname)
+
+    # 准备响应
+    zip_buffer.seek(0)
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"full_backup_{timestamp}.zip"
+
+    return StreamingResponse(
+        iter([zip_buffer.getvalue()]),
+        media_type='application/zip',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
     )
