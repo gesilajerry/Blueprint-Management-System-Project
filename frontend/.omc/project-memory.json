@@ -1,0 +1,91 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1775811012626,
+  "projectRoot": "/Volumes/256G/mywork/Blueprint Management System Project/frontend",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "vue",
+        "version": "3.4.0",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "5.0.0",
+        "category": "build"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "vite build",
+      "preview": "vite preview"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 2,
+      "lastAccessed": 1775811012548,
+      "keyFiles": [
+        "App.vue",
+        "main.js"
+      ]
+    },
+    "src/components": {
+      "path": "src/components",
+      "purpose": "UI components",
+      "fileCount": 1,
+      "lastAccessed": 1775811012553,
+      "keyFiles": [
+        "MainLayout.vue"
+      ]
+    },
+    "src/views": {
+      "path": "src/views",
+      "purpose": "View templates",
+      "fileCount": 14,
+      "lastAccessed": 1775811012554,
+      "keyFiles": [
+        "CorePartsManage.vue",
+        "Dashboard.vue",
+        "DepartmentManage.vue"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

@@ -1,0 +1,17 @@
+{
+  "drawing_no": "CTRL-V100-0001",
+  "version": "V1.0",
+  "generated_at": "2026-04-12T14:09:25.179730",
+  "description": "初始版本，基础原理图设计完成",
+  "change_details": [
+    "主控芯片STM32F407选型",
+    "最小系统电路设计",
+    "电源电路基础设计"
+  ],
+  "specifications": {
+    "chip": "STM32F407",
+    "layers": 4,
+    "size": "100x80mm"
+  },
+  "remarks": "第一版原理图，验证基本架构"
+}

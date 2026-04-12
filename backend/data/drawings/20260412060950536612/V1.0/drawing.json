@@ -1,0 +1,17 @@
+{
+  "drawing_no": "CTRL-V200-0001",
+  "version": "V1.0",
+  "generated_at": "2026-04-12T14:09:50.537949",
+  "description": "V2.0初始设计，基于V1.0优化",
+  "change_details": [
+    "全新主芯片STM32H743",
+    "双CAN接口",
+    "千兆以太网"
+  ],
+  "specifications": {
+    "chip": "STM32H743",
+    "can": 2,
+    "ethernet": "Gigabit"
+  },
+  "remarks": ""
+}

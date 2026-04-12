@@ -1,0 +1,17 @@
+{
+  "drawing_no": "CTRL-V200-0002",
+  "version": "V1.1",
+  "generated_at": "2026-04-12T14:09:50.545658",
+  "description": "升级为双路CAN，新增CANopen协议支持",
+  "change_details": [
+    "第2路CAN接口",
+    "CANopen协议芯片",
+    "隔离变压器"
+  ],
+  "specifications": {
+    "can": 2,
+    "ethernet": "100M",
+    "protocol": "CANopen"
+  },
+  "remarks": ""
+}

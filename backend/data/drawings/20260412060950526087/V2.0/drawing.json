@@ -1,0 +1,20 @@
+{
+  "drawing_no": "CTRL-V100-0003",
+  "version": "V2.0",
+  "generated_at": "2026-04-12T14:09:50.534531",
+  "description": "新增24V输入支持，宽电压输入范围",
+  "change_details": [
+    "支持12V-24V输入",
+    "效率优化到95%",
+    "过热保护阈值调整"
+  ],
+  "specifications": {
+    "input": "12V-24V",
+    "outputs": [
+      "5V/3A",
+      "3.3V/1.5A"
+    ],
+    "efficiency": ">95%"
+  },
+  "remarks": ""
+}

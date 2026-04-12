@@ -1,0 +1,18 @@
+{
+  "drawing_no": "MOTOR-BLDC-0001",
+  "version": "V2.0",
+  "generated_at": "2026-04-12T14:09:50.552044",
+  "description": "升级为FOC控制算法，完整硬件支持",
+  "change_details": [
+    "FOC算法硬件实现",
+    "编码器接口",
+    "速度反馈"
+  ],
+  "specifications": {
+    "phases": 3,
+    "current": "15A",
+    "control": "FOC",
+    "encoder": true
+  },
+  "remarks": ""
+}

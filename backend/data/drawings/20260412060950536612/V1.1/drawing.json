@@ -1,0 +1,15 @@
+{
+  "drawing_no": "CTRL-V200-0001",
+  "version": "V1.1",
+  "generated_at": "2026-04-12T14:09:50.539481",
+  "description": "修正USB接口电路问题",
+  "change_details": [
+    "USB差分线重新走线",
+    "ESD保护增强"
+  ],
+  "specifications": {
+    "chip": "STM32H743",
+    "usb": "corrected"
+  },
+  "remarks": ""
+}

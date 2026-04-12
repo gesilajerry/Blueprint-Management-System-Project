@@ -1,0 +1,15 @@
+{
+  "drawing_no": "CTRL-V200-0002",
+  "version": "V1.0",
+  "generated_at": "2026-04-12T14:09:50.544163",
+  "description": "初始通信接口设计",
+  "change_details": [
+    "CAN接口电路",
+    "Ethernet PHY电路"
+  ],
+  "specifications": {
+    "can": 1,
+    "ethernet": "100M"
+  },
+  "remarks": ""
+}

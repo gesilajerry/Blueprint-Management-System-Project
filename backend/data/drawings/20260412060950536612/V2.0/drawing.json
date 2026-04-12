@@ -1,0 +1,17 @@
+{
+  "drawing_no": "CTRL-V200-0001",
+  "version": "V2.0",
+  "generated_at": "2026-04-12T14:09:50.541239",
+  "description": "新增TSN时间同步接口，完整V2.0设计定稿",
+  "change_details": [
+    "TSN接口设计",
+    "双Flash冗余存储",
+    "看门狗增强"
+  ],
+  "specifications": {
+    "chip": "STM32H743",
+    "tsn": true,
+    "flash": "dual"
+  },
+  "remarks": ""
+}

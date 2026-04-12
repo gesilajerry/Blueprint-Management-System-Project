@@ -1,0 +1,16 @@
+{
+  "drawing_no": "SENSOR-PRES-0001",
+  "version": "V1.0",
+  "generated_at": "2026-04-12T14:09:50.565489",
+  "description": "初始版本设计",
+  "change_details": [
+    "压力传感器接口",
+    "信号放大电路",
+    "温度补偿"
+  ],
+  "specifications": {
+    "pressure_range": "0-10MPa",
+    "output": "4-20mA"
+  },
+  "remarks": ""
+}

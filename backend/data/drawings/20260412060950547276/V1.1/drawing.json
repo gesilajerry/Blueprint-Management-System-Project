@@ -1,0 +1,17 @@
+{
+  "drawing_no": "MOTOR-BLDC-0001",
+  "version": "V1.1",
+  "generated_at": "2026-04-12T14:09:50.550297",
+  "description": "增加过流保护阈值，调整栅极驱动",
+  "change_details": [
+    "过流保护点调整",
+    "栅极电阻优化",
+    "死区时间调整"
+  ],
+  "specifications": {
+    "phases": 3,
+    "current": "10A",
+    "protection": "enhanced"
+  },
+  "remarks": ""
+}

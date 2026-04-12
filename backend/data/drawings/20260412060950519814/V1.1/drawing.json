@@ -1,0 +1,16 @@
+{
+  "drawing_no": "CTRL-V100-0002",
+  "version": "V1.1",
+  "generated_at": "2026-04-12T14:09:50.522801",
+  "description": "优化散热孔布局，增加强度",
+  "change_details": [
+    "侧面散热孔直径调整",
+    "加强筋结构优化"
+  ],
+  "specifications": {
+    "material": "ABS",
+    "size": "120x100x50mm",
+    "cooling": "improved"
+  },
+  "remarks": ""
+}

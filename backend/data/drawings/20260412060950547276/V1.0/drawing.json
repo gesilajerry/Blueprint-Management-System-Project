@@ -1,0 +1,17 @@
+{
+  "drawing_no": "MOTOR-BLDC-0001",
+  "version": "V1.0",
+  "generated_at": "2026-04-12T14:09:50.548556",
+  "description": "初始版本BLDC驱动设计",
+  "change_details": [
+    "三相H桥设计",
+    "电流采样电路",
+    "基础保护"
+  ],
+  "specifications": {
+    "phases": 3,
+    "current": "10A",
+    "control": "6-step"
+  },
+  "remarks": ""
+}

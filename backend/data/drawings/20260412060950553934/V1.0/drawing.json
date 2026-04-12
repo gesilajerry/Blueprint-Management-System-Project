@@ -1,0 +1,16 @@
+{
+  "drawing_no": "MOTOR-BLDC-0002",
+  "version": "V1.0",
+  "generated_at": "2026-04-12T14:09:50.555304",
+  "description": "初始功率模块设计",
+  "change_details": [
+    "IGBT驱动电路",
+    "散热片安装设计"
+  ],
+  "specifications": {
+    "power": "1kW",
+    "igbt": 6,
+    "cooling": "passive"
+  },
+  "remarks": ""
+}

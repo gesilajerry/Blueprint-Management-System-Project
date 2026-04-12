@@ -1,0 +1,17 @@
+{
+  "drawing_no": "SENSOR-TEMP-0001",
+  "version": "V1.1",
+  "generated_at": "2026-04-12T14:09:50.561966",
+  "description": "优化密封结构，提高防水等级",
+  "change_details": [
+    "IP68防水设计",
+    "出线口密封",
+    "耐压测试验证"
+  ],
+  "specifications": {
+    "material": "SS304",
+    "size": "10x30mm",
+    "ip_rating": "IP68"
+  },
+  "remarks": ""
+}

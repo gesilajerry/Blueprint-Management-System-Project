@@ -1,0 +1,19 @@
+{
+  "drawing_no": "CTRL-V100-0001",
+  "version": "V2.0",
+  "generated_at": "2026-04-12T14:09:50.518150",
+  "description": "新增CAN通信接口，重新布局，支持更多工业协议",
+  "change_details": [
+    "新增第2路CAN接口",
+    "RS485接口升级为隔离型",
+    "新增SWD调试接口",
+    "整版重新布局布线"
+  ],
+  "specifications": {
+    "chip": "STM32H743",
+    "can": 2,
+    "rs485": "isolated",
+    "protocols": "Modbus/CANopen"
+  },
+  "remarks": "正式发布版本"
+}

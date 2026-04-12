@@ -1,0 +1,18 @@
+{
+  "drawing_no": "MOTOR-BLDC-0002",
+  "version": "V1.1",
+  "generated_at": "2026-04-12T14:09:50.557137",
+  "description": "优化散热设计，增加温度检测",
+  "change_details": [
+    "散热片尺寸调整",
+    "新增温度传感器",
+    "热仿真验证"
+  ],
+  "specifications": {
+    "power": "1kW",
+    "igbt": 6,
+    "cooling": "active",
+    "temp_sensor": true
+  },
+  "remarks": ""
+}

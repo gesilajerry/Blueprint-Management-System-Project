@@ -1,0 +1,20 @@
+{
+  "drawing_no": "CTRL-V100-0003",
+  "version": "V1.1",
+  "generated_at": "2026-04-12T14:09:50.529058",
+  "description": "优化转换效率，增加软启动电路",
+  "change_details": [
+    "效率优化到92%",
+    "增加软启动电路",
+    "瞬态响应改善"
+  ],
+  "specifications": {
+    "input": "12V",
+    "outputs": [
+      "5V/2A",
+      "3.3V/1A"
+    ],
+    "efficiency": ">92%"
+  },
+  "remarks": ""
+}

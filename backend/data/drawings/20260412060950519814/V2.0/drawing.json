@@ -1,0 +1,17 @@
+{
+  "drawing_no": "CTRL-V100-0002",
+  "version": "V2.0",
+  "generated_at": "2026-04-12T14:09:50.524327",
+  "description": "重新开模，尺寸调整以适配V2.0主板",
+  "change_details": [
+    "高度增加5mm",
+    "内部结构重新设计",
+    "防水密封圈槽"
+  ],
+  "specifications": {
+    "material": "ABS",
+    "size": "120x100x55mm",
+    "waterproof": true
+  },
+  "remarks": ""
+}

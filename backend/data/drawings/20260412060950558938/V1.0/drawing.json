@@ -1,0 +1,17 @@
+{
+  "drawing_no": "SENSOR-TEMP-0001",
+  "version": "V1.0",
+  "generated_at": "2026-04-12T14:09:50.560300",
+  "description": "初始封装设计",
+  "change_details": [
+    "探头设计",
+    "密封结构",
+    "安装螺纹"
+  ],
+  "specifications": {
+    "material": "SS304",
+    "size": "10x30mm",
+    "temp_range": "-40~150C"
+  },
+  "remarks": ""
+}

@@ -1,0 +1,15 @@
+{
+  "drawing_no": "CTRL-V100-0002",
+  "version": "V1.0",
+  "generated_at": "2026-04-12T14:09:50.521197",
+  "description": "初始版本外壳设计",
+  "change_details": [
+    "基础外壳模型",
+    "安装孔位设计"
+  ],
+  "specifications": {
+    "material": "ABS",
+    "size": "120x100x50mm"
+  },
+  "remarks": ""
+}

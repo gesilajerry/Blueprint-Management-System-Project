@@ -1,0 +1,20 @@
+{
+  "drawing_no": "CTRL-V100-0003",
+  "version": "V1.0",
+  "generated_at": "2026-04-12T14:09:50.527430",
+  "description": "初始版本电源模块设计",
+  "change_details": [
+    "12V转5V设计",
+    "5V转3.3V设计",
+    "基础保护电路"
+  ],
+  "specifications": {
+    "input": "12V",
+    "outputs": [
+      "5V/2A",
+      "3.3V/1A"
+    ],
+    "efficiency": ">85%"
+  },
+  "remarks": ""
+}
