@@ -939,7 +939,7 @@ const handleDownload = async () => {
   downloading.value = true
   try {
     // 构建下载URL，包含选中的版本ID
-    const baseUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/drawings/${drawing.id}/download`
+    const baseUrl = `/api/drawings/${drawing.id}/download`
     const url = selectedVersionId.value
       ? `${baseUrl}?version_id=${selectedVersionId.value}&t=${Date.now()}`
       : `${baseUrl}?t=${Date.now()}`

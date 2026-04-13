@@ -91,7 +91,7 @@ const handleLogin = async () => {
     if (valid) {
       loading.value = true
       try {
-        const apiUrl = 'http://127.0.0.1:8000/api/auth/login'
+        const apiUrl = '/api/auth/login'
         console.log('正在请求:', apiUrl)
 
         const response = await fetch(apiUrl, {

@@ -386,8 +386,7 @@ const handleExport = async () => {
 const handleFullBackup = async () => {
   backupLoading.value = true
   try {
-    const API_BASE_URL = 'http://127.0.0.1:8000/api'
-    const response = await fetch(`${API_BASE_URL}/drawings/export/backup`, {
+    const response = await fetch(`/api/drawings/export/backup`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }

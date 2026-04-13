@@ -12,6 +12,11 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',  // 允许局域网访问
-    open: true
+    proxy: {
+      '/api': {
+        target: 'http://192.168.20.136:8000',
+        changeOrigin: true
+      }
+    }
   }
 })

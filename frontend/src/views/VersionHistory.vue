@@ -390,7 +390,7 @@ const handleDownload = async (row) => {
   try {
     ElMessage.success(`正在下载 ${row.version_no}...`)
 
-    const baseUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/drawings/${route.params.id}/download?version_id=${row.id}&t=${Date.now()}`
+    const baseUrl = `/api/drawings/${route.params.id}/download?version_id=${row.id}&t=${Date.now()}`
     const response = await fetch(baseUrl, {
       method: 'GET',
       headers: {
@@ -450,7 +450,7 @@ const handlePreview = async (row) => {
   if (fileFormat === 'pdf') {
     isPdfFile.value = true
     try {
-      const previewUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/drawings/${route.params.id}/download?version_id=${row.id}&t=${Date.now()}`
+      const previewUrl = `/api/drawings/${route.params.id}/download?version_id=${row.id}&t=${Date.now()}`
       const response = await fetch(previewUrl, {
         method: 'GET',
         headers: {

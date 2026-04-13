@@ -1,5 +1,6 @@
 // API 基础配置
-const API_BASE_URL = 'http://127.0.0.1:8000/api'
+// 使用相对路径，通过 Vite 代理转发到后端
+const API_BASE_URL = '/api'
 
 // 获取 Token
 const getToken = () => {
